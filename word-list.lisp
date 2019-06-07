@@ -1,6 +1,6 @@
 
 (load "~/for-lisp/ltk/ltk.lisp")
-(defvar word-file "word-list");;path
+(defvar word-file "~/for-lisp/util/word-list");;path
 (defvar *word-list* '())
 (defun str-comp (func str1 str2)
   (let ((n (string/= str1 str2)))
@@ -39,19 +39,26 @@
       (ltk:pack (list win cwin feng))
       (ltk:pack (list engtext engreek bgsave))
       )))
-
+(defun still-input-p (str lst)
+  (dolist (var lst nil)
+    (if (string= str (car var)) (return-from still-input-p t))))
 (defun words-r-loop ()
   (loop
     (let (word-g)
       (format t "見出し語を入力してください~%\>")
       (setf word-g (read-line))
-      (format t "~aの訳語を入力してください~%\>" word-g)
-      (setf *word-list*
-            (sort
-             (cons (cons word-g (read-line)) *word-list*)
-             (lambda (a b) (str-comp #'< (car a) (car b)))))
+      (if (still-input-p word-g *word-list*)
+          (format t "既に登録されています~%")
+          (progn (format t "~aの訳語を入力してください~%\>" word-g)
+                 (setf *word-list*
+                     (sort
+                      (cons (cons word-g (read-line)) *word-list*)
+                      (lambda (a b) (str-comp #'< (car a) (car b)))))))
       (format t "終了しますかYorN~%\>")
-      (if (eql 'y (read)) (return-from words-r-loop (words))))))
+      (if (eql 'y (read))
+          (progn
+            (save-words)
+            (return-from words-r-loop (words)))))))
 (defun head-search (n search-lst)
   (let (lst)
     (dolist (var (reverse search-lst) lst)
@@ -101,8 +108,16 @@
       (if (eql 'y (read)) (return-from words-p-loop (words)))
       (setf lst (cdr lst))
       (setf n (+ n 1)))))
+(defun load-words ()
+  (with-open-file (st word-file :direction :input)
+    (setf *word-list* (read st))))
+(defun save-words ()
+  (with-open-file
+      (st word-file :direction :output :if-exists :overwrite)
+    (write *word-list* :stream st)))
 (defun words ()
   (let ()
+    (load-words)
     (format t
        "modeを選択してください~%登録(r),検索(s),テスト(p),終了(q)~%\>")
     (case (read)
@@ -111,3 +126,9 @@
       (P (words-p-loop))
       (Q (format t "exit~%"))
       (t (format t "不正なmodeが検出されました")))))
+
+
+
+
+
+
