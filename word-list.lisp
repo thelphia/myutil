@@ -10,7 +10,6 @@
           (t (apply func
                     (list (char-code (char str1 n))
                           (char-code (char str2 n))))))))
-
 (defun words-window ()
   (ltk:with-ltk ()
     (let* (word-g word-j
@@ -41,12 +40,57 @@
       (ltk:pack (list engtext engreek bgsave))
       )))
 
-(defun words-loop ()
+(defun words-r-loop ()
   (loop
     (let (word-g)
       (format t "見出し語を入力してください~%\>")
       (setf word-g (read-line))
       (format t "~aの訳語を入力してください~%\>" word-g)
-      (setf *word-list* (cons (cons word-g (read)) *word-list*))
+      (setf *word-list*
+            (sort
+             (cons (cons word-g (read-line)) *word-list*)
+             (lambda (a b) (str-comp #'< (car a) (car b)))))
       (format t "終了しますかYorN~%\>")
-      (if (eql 'y (read)) (return-from words-loop *word-list*)))))
+      (if (eql 'y (read)) (return-from words-r-loop (words))))))
+(defun head-search (n search-lst)
+  (let (lst)
+    (dolist (var (reverse search-lst) lst)
+      (if (eql 0 (search n (car var)))
+          (setf lst (cons var lst))))))
+(defun words-s-loop ()
+  (loop
+        (let (n lst)
+          (format t "検索したい見出し語を入力してください~%\>")
+          (setf n (read-line))
+          (setf lst (head-search n *word-list*))
+          (format t "検索結果~%")
+          (case (length lst)
+            (0 (format t "該当の語句は見つかりませんでした~%"))
+            (1 (format t "~a\:~a~%" (car (car lst)) (cdr (car lst))))
+            (t
+             (format t "~a~%" lst)
+             (format t "さらに絞りますかYorN~%\>")
+             (if (eql 'y (read))
+                 (progn
+                   (format t "~a" n)
+                   (format t "検索結果~%~a~%"
+                           (head-search
+                            (format nil "~a~a" n (read-line))
+                            lst))))))
+          (format t "終了しますかYorN~%\>")
+          (if (eql 'y (read)) (return-from words-s-loop (words))))))
+(defun random-lst (lst)
+  (dotimes (i (length lst) )
+    ()))
+(defun words-p-loop ()
+  ())
+(defun words ()
+  (let ()
+    (format t
+       "modeを選択してください~%登録(r),検索(s),テスト(p),終了(q)~%\>")
+    (case (read)
+      (R (words-r-loop))
+      (S (words-s-loop))
+      (P (+ 1 2))
+      (Q (format t "exit~%"))
+      (t (format t "不正なmodeが検出されました")))))
