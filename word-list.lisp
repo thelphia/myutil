@@ -10,6 +10,7 @@
           (t (apply func
                     (list (char-code (char str1 n))
                           (char-code (char str2 n))))))))
+#|
 (defun words-window ()
   (ltk:with-ltk ()
     (let* (word-g word-j
@@ -39,6 +40,7 @@
       (ltk:pack (list win cwin feng))
       (ltk:pack (list engtext engreek bgsave))
       )))
+|#
 (defun still-input-p (str lst)
   (dolist (var lst nil)
     (if (string= str (car var)) (return-from still-input-p t))))
@@ -127,7 +129,44 @@
       (Q (format t "exit~%"))
       (t (format t "不正なmodeが検出されました")))))
 
-
+;;ここからGUI用
+(defun gui-search (lst eword lresult)
+  (progn
+    (setf lst
+          (head-search
+           (ltk:text eword)
+           *word-list*))
+    (setf (ltk:text lresult)
+          (if (null lst)
+              "該当の語句は見つかりませんでした"
+              (format nil "~a" lst)))))
+(defun search-window ()
+  (ltk:with-ltk ()
+    (let* (lst
+           (fsearch (make-instance 'ltk:frame))
+           (tentry (make-instance 'ltk:label
+                                  :master fsearch
+                                  :text
+                                  "検索したい語句を入力してください"))
+           (eword (make-instance 'ltk:entry
+                                 :master fsearch))
+           (lresult (make-instance 'ltk:label
+                                   :master fsearch
+                                   :width 60))
+           (bsearch (make-instance 'ltk:button
+                                   :master fsearch
+                                   :text "search"
+                                   :command
+                                   (lambda ()
+                                     (gui-search lst eword lresult))
+                                   )))
+      (ltk:bind tentry "<1>"
+                (lambda (event)
+                  (declare (ignore event))
+                  (gui-search lst eword lresult)))
+      (ltk:focus eword)
+      (load-words)
+      (ltk:pack (list fsearch tentry eword bsearch lresult)))))
 
 
 
